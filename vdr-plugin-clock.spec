@@ -2,7 +2,7 @@
 %define plugin	clock
 %define name	vdr-plugin-%plugin
 %define version	0.0.6
-%define rel	8
+%define rel	9
 
 Summary:	VDR plugin: A Simple Clock
 Name:		%name
