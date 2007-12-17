@@ -14,7 +14,6 @@ URL:		http://vdr.humpen.at/
 Source:		http://vdr.humpen.at/uploads/media/vdr-%plugin-%version.tar.bz2
 Patch1:		clock-0.0.6-extra-qual.patch
 Patch2:		clock-0.0.6-fix-makefile.patch
-BuildRoot:	%{_tmppath}/%{name}-buildroot
 BuildRequires:	vdr-devel >= 1.4.1-6
 Requires:	vdr-abi = %vdr_abi
 
