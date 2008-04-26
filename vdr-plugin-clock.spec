@@ -1,8 +1,8 @@
 
 %define plugin	clock
 %define name	vdr-plugin-%plugin
-%define version	0.0.6
-%define rel	12
+%define version	1.0.0
+%define rel	1
 
 Summary:	VDR plugin: A Simple Clock
 Name:		%name
@@ -11,11 +11,10 @@ Release:	%mkrel %rel
 Group:		Video
 License:	GPL
 URL:		http://vdr.humpen.at/
-Source:		http://vdr.humpen.at/uploads/media/vdr-%plugin-%version.tar.bz2
-Patch1:		clock-0.0.6-extra-qual.patch
-Patch2:		clock-0.0.6-fix-makefile.patch
+Source:		http://vdr.humpen.at/uploads/media/vdr-%plugin-%version.tgz
+Patch0:		clock-1.0.0-i18n-1.6.patch
 BuildRoot:	%{_tmppath}/%{name}-buildroot
-BuildRequires:	vdr-devel >= 1.4.1-6
+BuildRequires:	vdr-devel >= 1.6.0
 Requires:	vdr-abi = %vdr_abi
 
 %description
@@ -28,8 +27,8 @@ The Idea is to set a unused key from your remote control
 
 %prep
 %setup -q -n %plugin-%version
-%patch1 -p0 -b .extra
-%patch2 -p1
+%patch0 -p1
+%vdr_plugin_prep
 
 %build
 %vdr_plugin_build
