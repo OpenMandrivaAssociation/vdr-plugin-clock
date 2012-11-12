@@ -1,0 +1,1396 @@
+
+This is a semi-automatically created i18n adaptation patch and may contain
+errors (such as missing translations). This should only be used as a
+temporary measure until the upstream plugin maintainer fixes the plugin
+properly according to the instructions in i18n-to-gettext.pl.
+
+Created for Mandriva Linux packaging by Anssi Hannula <anssi@mandriva.org>.
+
+
+Index: clock-1.0.0/Makefile
+===================================================================
+--- clock-1.0.0/Makefile
++++ clock-1.0.0/Makefile	2008-04-22 18:43:53.000000000 +0300
+@@ -48,7 +48,7 @@
+ 
+ ### The object files (add further files here):
+ 
+-OBJS = $(PLUGIN).o i18n.o enhancedbitmap.o
++OBJS = $(PLUGIN).o  enhancedbitmap.o
+ 
+ ### Implicit rules:
+ 
+@@ -64,9 +64,34 @@
+ 
+ -include $(DEPFILE)
+ 
++### Internationalization (I18N):
++
++PODIR     = po
++LOCALEDIR = $(VDRDIR)/locale
++I18Npo    = $(wildcard $(PODIR)/*.po)
++I18Nmsgs  = $(addprefix $(LOCALEDIR)/, $(addsuffix /LC_MESSAGES/vdr-$(PLUGIN).mo, $(notdir $(foreach file, $(I18Npo), $(basename $(file))))))
++I18Npot   = $(PODIR)/$(PLUGIN).pot
++
++%.mo: %.po
++	msgfmt -c -o $@ $<
++
++$(I18Npot): $(wildcard *.[ch] *.[ch]xx *.cc *.[ch]pp *.hh)
++	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --msgid-bugs-address='<http://qa.mandriva.com/>' -o $@ $^
++
++%.po: $(I18Npot)
++	msgmerge -U --no-wrap --no-location --backup=none -q $@ $<
++	@touch $@
++
++$(I18Nmsgs): $(LOCALEDIR)/%/LC_MESSAGES/vdr-$(PLUGIN).mo: $(PODIR)/%.mo
++	@mkdir -p $(dir $@)
++	cp $< $@
++
++.PHONY: i18n
++i18n: $(I18Nmsgs)
++
+ ### Targets:
+ 
+-all: libvdr-$(PLUGIN).so
++all: libvdr-$(PLUGIN).so i18n
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+@@ -81,4 +106,5 @@
+ 	@echo Distribution package created as $(PACKAGE).tgz
+ 
+ clean:
++	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
+ 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+Index: clock-1.0.0/clock.c
+===================================================================
+--- clock-1.0.0/clock.c
++++ clock-1.0.0/clock.c	2008-04-22 18:43:53.000000000 +0300
+@@ -26,7 +26,7 @@
+ #include <vdr/remote.h>
+ #include <math.h>
+ #include "enhancedbitmap.h"
+-#include "i18n.h"
++
+ 
+ #include "images/clock.xpm"
+ #include "images/tux.xpm"
+@@ -34,7 +34,7 @@
+ 
+ static const char *VERSION        = "1.0.0";
+ static const char *DESCRIPTION    = "A Simple Clock";
+-static const char *MAINMENUENTRY  = "Clock";
++static const char *MAINMENUENTRY  = trNOOP("Clock");
+ 
+ // Global variables
+ 
+@@ -67,21 +67,21 @@
+ int       ColorMin   = 1;
+ int       ColorSec   = 3;
+ int       TeaTime    = 5;
+-const char      *TimeColors[]  = {"Transparent",
+-                            "White",
+-	                    "Black",
+-			    "Red",
+-			    "Green",
+-			    "Yellow",
+-			    "Blue",
++const char      *TimeColors[]  = {trNOOP("Transparent"),
++                            trNOOP("White"),
++	                    trNOOP("Black"),
++			    trNOOP("Red"),
++			    trNOOP("Green"),
++			    trNOOP("Yellow"),
++			    trNOOP("Blue"),
+                            };
+-const char      *ClockType[] = {"Digital",
+-			  "Analog",
++const char      *ClockType[] = {trNOOP("Digital"),
++			  trNOOP("Analog"),
+ 			  "Analog modern",
+ 			  "MorphOS",
+ 			  "TuxClock",
+-			  "Internet time",
+-			  "Tea clock",
++			  trNOOP("Internet time"),
++			  trNOOP("Tea clock"),
+                          };
+ 
+ 
+@@ -635,7 +635,7 @@
+ bool cPluginClock::Start(void)
+ {
+   // Start any background activities the plugin shall perform.
+-  RegisterI18n(Phrases);
++  
+   return true;
+ }
+ 
+Index: clock-1.0.0/i18n.c
+===================================================================
+--- clock-1.0.0/i18n.c
++++ clock-1.0.0/i18n.c	2008-04-22 18:43:53.000000000 +0300
+@@ -1,646 +0,0 @@
+-/*
+- * i18n.c: Internationalization
+- *
+- * Clock Plugin for VDR. See http://vdr.aistleitner.info for download.
+- * Copyright (C) 2007  Mario Aistleitner <vdr@aistleitner.info>
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; either version 2 of the License, or
+- * any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License along
+- * with this program; if not, write to the Free Software Foundation, Inc.,
+- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * $Id: i18n.c 1.3 2002/06/23 13:05:59 kls Exp $
+- *
+- * Italian    translations provided by Gringo <vdr-italian@tiscali.it>
+- */
+-
+-#include "i18n.h"
+-
+-const tI18nPhrase Phrases[] = {
+-  { "Clock",
+-    "Uhr",
+-    "",// TODO
+-    "Orologio",
+-    "",// TODO
+-    "",// TODO
+-    "Heure",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Часы",// TODO
+-  },
+-  { "Offset",
+-    "Abstand vom linken Rand",
+-    "",// TODO
+-    "Distanza dal bordo sinistro",
+-    "",// TODO
+-    "",// TODO
+-    "Distance du bord gauche",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Растояние от левого края",// TODO
+-  },
+-  { "Show Seconds",
+-    "Sekunden anzeigen",
+-    "",// TODO
+-    "Mostra secondi",
+-    "",// TODO
+-    "",// TODO
+-    "Afficher secondes",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Показать секунды",// TODO
+-  },
+-  { "Type of the clock",
+-    "Art der Uhr",
+-    "",// TODO
+-    "Tipo di orologio",
+-    "",// TODO
+-    "",// TODO
+-    "Format d'affichage",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Вид часов",// TODO
+-  },
+-  { "Length of sec arrow [%]",
+-    "Lфnge des Sekundenzeigers [%]",
+-    "",// TODO
+-    "Lunghezza freccia secondi [%]",
+-    "",// TODO
+-    "",// TODO
+-    "Longueur aiguille Sec [%]",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Длина секундной стрелки [%]",// TODO
+-  },
+-  { "Length of min arrow [%]",
+-    "Lфnge des Minutenzeigers [%]",
+-    "",// TODO
+-    "Lunghezza freccia minuti [%]",
+-    "",// TODO
+-    "",// TODO
+-    "Longueur aiguille Min [%]",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Длина минутной стрелки [%]",// TODO
+-  },
+-  { "Length of hour arrow [%]",
+-    "Lфnge des Stundenzeigers [%]",
+-    "",// TODO
+-    "Lunghezza freccia ore [%]",
+-    "",// TODO
+-    "",// TODO
+-    "Longueur aiguille Hr [%]",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Длина  часовой стрелки [%]",// TODO
+-  },
+-  { "Width of sec arrow [%]",
+-    "Breite des Sekundenzeigers [%]",
+-    "",// TODO
+-    "Larghezza freccia secondi [%]",
+-    "",// TODO
+-    "",// TODO
+-    "Largeur des aiguilles Sec [%]",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Ширина секундной стрелки [%]",// TODO
+-  },
+-  { "Width of min arrow [%]",
+-    "Breite des Minutenzeigers [%]",
+-    "",// TODO
+-    "Larghezza freccia minuti [%]",
+-    "",// TODO
+-    "",// TODO
+-    "Largeur des aiguilles Min [%]",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Ширина минутной стрелки [%]",// TODO
+-  },
+-  { "Width of hour arrow [%]",
+-    "Breite des Stundenzeigers [%]",
+-    "",// TODO
+-    "Larghezza freccia ore [%]",
+-    "",// TODO
+-    "",// TODO
+-    "Largeur des aiguilles Hr [%]",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Ширина часовой стрелки [%]",// TODO
+-  },
+-  { "Analog clock size",
+-    "Grіпe der Analogen Uhr",
+-    "",// TODO
+-    "Dimensione orologio analogico",
+-    "",// TODO
+-    "",// TODO
+-    "Taille de l'horloge analogique",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Размер стрелочных часов",// TODO
+-  },
+-  { "Transparent",
+-    "Transparent",
+-    "",// TODO
+-    "Trasparente",
+-    "",// TODO
+-    "",// TODO
+-    "Transparent",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Прозрачные",// TODO
+-  },
+-  { "White",
+-    "Weiss",
+-    "",// TODO
+-    "Bianco",
+-    "",// TODO
+-    "",// TODO
+-    "Blanc",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Белые",// TODO
+-  },
+-  { "Background color",
+-    "Hintergrundfarbe",
+-    "",// TODO
+-    "Colore sfondo",
+-    "",// TODO
+-    "",// TODO
+-    "Couleur de fond",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Цвет заднего фона",// TODO
+-  },
+-  { "Black",
+-    "Schwarz",
+-    "",// TODO
+-    "Nero",
+-    "",// TODO
+-    "",// TODO
+-    "Noir",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Чёрный",// TODO
+-  },
+-  { "Hour arrow color",
+-    "Farbe des Stundenzeigers",
+-    "",// TODO
+-    "Colore freccia ore",
+-    "",// TODO
+-    "",// TODO
+-    "Couleur aiguille Hr",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Цвет часовой стрелки",// TODO
+-  },
+-  { "Red",
+-    "Rot",
+-    "",// TODO
+-    "Rosso",
+-    "",// TODO
+-    "",// TODO
+-    "Rouge",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Красный",// TODO
+-  },
+-  { "Green",
+-    "Grќn",
+-    "",// TODO
+-    "Verde",
+-    "",// TODO
+-    "",// TODO
+-    "Vert",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Зелёный",// TODO  
+-  },
+-  { "Yellow",
+-    "Gelb",
+-    "",// TODO
+-    "Giallo",
+-    "",// TODO
+-    "",// TODO
+-    "Jaune",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Жёлтый",// TODO
+-  },
+-  { "Blue",
+-    "Blau",
+-    "",// TODO
+-    "Blu",
+-    "",// TODO
+-    "",// TODO
+-    "Bleu",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Синий",// TODO
+-  },
+-  { "Seconds arrow color",
+-    "Farbe des Sekundenzeigers",
+-    "",// TODO
+-    "Colore freccia secondi",
+-    "",// TODO
+-    "",// TODO
+-    "Couleur aiguille Sec",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Цвет секундной стрелки",// TODO
+-  },
+-  { "Minutes arrow color",
+-    "Farbe des Minutenzeigers",
+-    "",// TODO
+-    "Colore freccia minuti",
+-    "",// TODO
+-    "",// TODO
+-    "Couleur aiguille Min",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Цвет минутной стрелки",// TODO
+-  },
+-  { "Foreground color",
+-    "Vordergrund Farbe",
+-    "",// TODO
+-    "Colore primo piano",
+-    "",// TODO
+-    "",// TODO
+-    "Couleur premier plan",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Цвет переднего фона",// TODO
+-  },
+-  { "Arrow color",
+-    "Zeigerfarbe",
+-    "",// TODO
+-    "Colore freccia",
+-    "",// TODO
+-    "",// TODO
+-    "Couleur aiguilles",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Цвет стрелок",// TODO
+-  },
+-  { "Digital",
+-    "Digital",
+-    "",// TODO
+-    "Digitale",
+-    "",// TODO
+-    "",// TODO
+-    "Digital",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Цыфровые",// TODO
+-  },
+-  { "Analog",
+-    "Analog",
+-    "",// TODO
+-    "Analogico",
+-    "",// TODO
+-    "",// TODO
+-    "Analogique",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Стрелочные",// TODO
+-  },
+-  { "Internet time",
+-    "Internet Zeit",
+-    "",// TODO
+-    "Ora Internet",
+-    "",// TODO
+-    "",// TODO
+-    "Temps internet",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Интернет время",// TODO
+-  },
+-  { "Tea clock",
+-    "Teekocher",
+-    "",// TODO
+-    "Pausa tш",
+-    "",// TODO
+-    "",// TODO
+-    "Pause cafe",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Время для чая",// TODO
+-  },
+-  { "It's tea time",
+-    "Es ist Tee Zeit!",
+-    "",// TODO
+-    "E' l'ora del tш!",
+-    "",// TODO
+-    "",// TODO
+-    "c'est l'heure de la pause cafe",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Время чая!",// TODO
+-  },
+-  { "Time till tea",
+-    "Zeit bis der Tee fertig ist",
+-    "",// TODO
+-    "Tempo restante per il tш",
+-    "",// TODO
+-    "",// TODO
+-    "Temps restant jusqu'au cafe",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Время заварки чая",// TODO
+-  },
+-  { "Show Countdown",
+-    "Countdown anzeigen",
+-    "",// TODO
+-    "Mostra conto alla rovescia",
+-    "",// TODO
+-    "",// TODO
+-    "Afficher le compte a rebours",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Обратный отчёт времени",// TODO
+-  },
+-  { "FullScreen",
+-    "FullScreen",
+-    "",// TODO
+-    "Schermo intero",
+-    "",// TODO
+-    "",// TODO
+-    "FullScreen",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "Весь размер",// TODO
+-  },
+-  { "x Position",
+-    "x Position",
+-    "",// TODO
+-    "Posizione x",
+-    "",// TODO
+-    "",// TODO
+-    "x Position",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "x Позиция",// TODO
+-  },
+-  { "y Position",
+-    "y Position",
+-    "",// TODO
+-    "Posizione y",
+-    "",// TODO
+-    "",// TODO
+-    "y Position",
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "",// TODO
+-    "y Позиция",// TODO
+-  },
+-  { NULL }
+-  };
+-
+-
+-
+-
+Index: clock-1.0.0/i18n.h
+===================================================================
+--- clock-1.0.0/i18n.h
++++ clock-1.0.0/i18n.h	2008-04-22 18:43:53.000000000 +0300
+@@ -1,31 +0,0 @@
+-/*
+- * i18n.h: Internationalization
+- *
+- * Clock Plugin for VDR. See http://vdr.aistleitner.info for download.
+- * Copyright (C) 2007  Mario Aistleitner <vdr@aistleitner.info>
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; either version 2 of the License, or
+- * any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License along
+- * with this program; if not, write to the Free Software Foundation, Inc.,
+- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+- *
+- * $Id: i18n.h 1.2 2002/05/11 14:48:16 kls Exp $
+- */
+-
+-#ifndef _I18N__H
+-#define _I18N__H
+-
+-#include <vdr/i18n.h>
+-
+-extern const tI18nPhrase Phrases[];
+-
+-#endif //_I18N__H
+Index: clock-1.0.0/po/clock.pot
+===================================================================
+--- clock-1.0.0/po/clock.pot
++++ clock-1.0.0/po/clock.pot	2008-04-22 18:43:53.000000000 +0300
+@@ -0,0 +1,141 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: http://qa.mandriva.com/\n"
++"POT-Creation-Date: 2008-04-22 18:43+0300\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=CHARSET\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: clock.c:37
++msgid "Clock"
++msgstr ""
++
++#: clock.c:70
++msgid "Transparent"
++msgstr ""
++
++#: clock.c:71
++msgid "White"
++msgstr ""
++
++#: clock.c:72
++msgid "Black"
++msgstr ""
++
++#: clock.c:73
++msgid "Red"
++msgstr ""
++
++#: clock.c:74
++msgid "Green"
++msgstr ""
++
++#: clock.c:75
++msgid "Yellow"
++msgstr ""
++
++#: clock.c:76
++msgid "Blue"
++msgstr ""
++
++#: clock.c:78
++msgid "Digital"
++msgstr ""
++
++#: clock.c:79
++msgid "Analog"
++msgstr ""
++
++#: clock.c:83
++msgid "Internet time"
++msgstr ""
++
++#: clock.c:84
++msgid "Tea clock"
++msgstr ""
++
++#: clock.c:400
++msgid "It's tea time"
++msgstr ""
++
++#: clock.c:523
++msgid "x Position"
++msgstr ""
++
++#: clock.c:524
++msgid "y Position"
++msgstr ""
++
++#: clock.c:525
++msgid "Type of the clock"
++msgstr ""
++
++#: clock.c:527
++msgid "Background color"
++msgstr ""
++
++#: clock.c:528
++msgid "Foreground color"
++msgstr ""
++
++#: clock.c:532 clock.c:536
++msgid "Show Seconds"
++msgstr ""
++
++#: clock.c:537
++msgid "FullScreen"
++msgstr ""
++
++#: clock.c:538
++msgid "Analog clock size"
++msgstr ""
++
++#: clock.c:539
++msgid "Arrow color"
++msgstr ""
++
++#: clock.c:540
++msgid "Length of hour arrow [%]"
++msgstr ""
++
++#: clock.c:541
++msgid "Width of hour arrow [%]"
++msgstr ""
++
++#: clock.c:542
++msgid "Length of min arrow [%]"
++msgstr ""
++
++#: clock.c:543
++msgid "Width of min arrow [%]"
++msgstr ""
++
++#: clock.c:545
++msgid "Seconds arrow color"
++msgstr ""
++
++#: clock.c:546
++msgid "Length of sec arrow [%]"
++msgstr ""
++
++#: clock.c:547
++msgid "Width of sec arrow [%]"
++msgstr ""
++
++#: clock.c:552
++msgid "Time till tea"
++msgstr ""
++
++#: clock.c:553
++msgid "Show Countdown"
++msgstr ""
+Index: clock-1.0.0/po/de_DE.po
+===================================================================
+--- clock-1.0.0/po/de_DE.po
++++ clock-1.0.0/po/de_DE.po	2008-04-22 18:43:53.000000000 +0300
+@@ -0,0 +1,140 @@
++# VDR clock plugin language source file.
++# Copyright (C) YEAR THE VDR-clock'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the VDR-clock package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR-clock\n"
++"Report-Msgid-Bugs-To: http://qa.mandriva.com/\n"
++"POT-Creation-Date: 2008-04-22 18:43+0300\n"
++"PO-Revision-Date: 2008-04-22 18:43+0300\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: clock.c:37
++msgid "Clock"
++msgstr "Uhr"
++
++#: clock.c:70
++msgid "Transparent"
++msgstr "Transparent"
++
++#: clock.c:71
++msgid "White"
++msgstr "Weiss"
++
++#: clock.c:72
++msgid "Black"
++msgstr "Schwarz"
++
++#: clock.c:73
++msgid "Red"
++msgstr "Rot"
++
++#: clock.c:74
++msgid "Green"
++msgstr "Grќn"
++
++#: clock.c:75
++msgid "Yellow"
++msgstr "Gelb"
++
++#: clock.c:76
++msgid "Blue"
++msgstr "Blau"
++
++#: clock.c:78
++msgid "Digital"
++msgstr "Digital"
++
++#: clock.c:79
++msgid "Analog"
++msgstr "Analog"
++
++#: clock.c:83
++msgid "Internet time"
++msgstr "Internet Zeit"
++
++#: clock.c:84
++msgid "Tea clock"
++msgstr "Teekocher"
++
++#: clock.c:400
++msgid "It's tea time"
++msgstr "Es ist Tee Zeit!"
++
++#: clock.c:523
++msgid "x Position"
++msgstr "x Position"
++
++#: clock.c:524
++msgid "y Position"
++msgstr "y Position"
++
++#: clock.c:525
++msgid "Type of the clock"
++msgstr "Art der Uhr"
++
++#: clock.c:527
++msgid "Background color"
++msgstr "Hintergrundfarbe"
++
++#: clock.c:528
++msgid "Foreground color"
++msgstr "Vordergrund Farbe"
++
++#: clock.c:532 clock.c:536
++msgid "Show Seconds"
++msgstr "Sekunden anzeigen"
++
++#: clock.c:537
++msgid "FullScreen"
++msgstr "FullScreen"
++
++#: clock.c:538
++msgid "Analog clock size"
++msgstr "Grіпe der Analogen Uhr"
++
++#: clock.c:539
++msgid "Arrow color"
++msgstr "Zeigerfarbe"
++
++#: clock.c:540
++msgid "Length of hour arrow [%]"
++msgstr "Lфnge des Stundenzeigers [%]"
++
++#: clock.c:541
++msgid "Width of hour arrow [%]"
++msgstr "Breite des Stundenzeigers [%]"
++
++#: clock.c:542
++msgid "Length of min arrow [%]"
++msgstr "Lфnge des Minutenzeigers [%]"
++
++#: clock.c:543
++msgid "Width of min arrow [%]"
++msgstr "Breite des Minutenzeigers [%]"
++
++#: clock.c:545
++msgid "Seconds arrow color"
++msgstr "Farbe des Sekundenzeigers"
++
++#: clock.c:546
++msgid "Length of sec arrow [%]"
++msgstr "Lфnge des Sekundenzeigers [%]"
++
++#: clock.c:547
++msgid "Width of sec arrow [%]"
++msgstr "Breite des Sekundenzeigers [%]"
++
++#: clock.c:552
++msgid "Time till tea"
++msgstr "Zeit bis der Tee fertig ist"
++
++#: clock.c:553
++msgid "Show Countdown"
++msgstr "Countdown anzeigen"
+Index: clock-1.0.0/po/fr_FR.po
+===================================================================
+--- clock-1.0.0/po/fr_FR.po
++++ clock-1.0.0/po/fr_FR.po	2008-04-22 18:43:53.000000000 +0300
+@@ -0,0 +1,140 @@
++# VDR clock plugin language source file.
++# Copyright (C) YEAR THE VDR-clock'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the VDR-clock package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR-clock\n"
++"Report-Msgid-Bugs-To: http://qa.mandriva.com/\n"
++"POT-Creation-Date: 2008-04-22 18:43+0300\n"
++"PO-Revision-Date: 2008-04-22 18:43+0300\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-1\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: clock.c:37
++msgid "Clock"
++msgstr "Heure"
++
++#: clock.c:70
++msgid "Transparent"
++msgstr "Transparent"
++
++#: clock.c:71
++msgid "White"
++msgstr "Blanc"
++
++#: clock.c:72
++msgid "Black"
++msgstr "Noir"
++
++#: clock.c:73
++msgid "Red"
++msgstr "Rouge"
++
++#: clock.c:74
++msgid "Green"
++msgstr "Vert"
++
++#: clock.c:75
++msgid "Yellow"
++msgstr "Jaune"
++
++#: clock.c:76
++msgid "Blue"
++msgstr "Bleu"
++
++#: clock.c:78
++msgid "Digital"
++msgstr "Digital"
++
++#: clock.c:79
++msgid "Analog"
++msgstr "Analogique"
++
++#: clock.c:83
++msgid "Internet time"
++msgstr "Temps internet"
++
++#: clock.c:84
++msgid "Tea clock"
++msgstr "Pause cafe"
++
++#: clock.c:400
++msgid "It's tea time"
++msgstr "c'est l'heure de la pause cafe"
++
++#: clock.c:523
++msgid "x Position"
++msgstr "x Position"
++
++#: clock.c:524
++msgid "y Position"
++msgstr "y Position"
++
++#: clock.c:525
++msgid "Type of the clock"
++msgstr "Format d'affichage"
++
++#: clock.c:527
++msgid "Background color"
++msgstr "Couleur de fond"
++
++#: clock.c:528
++msgid "Foreground color"
++msgstr "Couleur premier plan"
++
++#: clock.c:532 clock.c:536
++msgid "Show Seconds"
++msgstr "Afficher secondes"
++
++#: clock.c:537
++msgid "FullScreen"
++msgstr "FullScreen"
++
++#: clock.c:538
++msgid "Analog clock size"
++msgstr "Taille de l'horloge analogique"
++
++#: clock.c:539
++msgid "Arrow color"
++msgstr "Couleur aiguilles"
++
++#: clock.c:540
++msgid "Length of hour arrow [%]"
++msgstr "Longueur aiguille Hr [%]"
++
++#: clock.c:541
++msgid "Width of hour arrow [%]"
++msgstr "Largeur des aiguilles Hr [%]"
++
++#: clock.c:542
++msgid "Length of min arrow [%]"
++msgstr "Longueur aiguille Min [%]"
++
++#: clock.c:543
++msgid "Width of min arrow [%]"
++msgstr "Largeur des aiguilles Min [%]"
++
++#: clock.c:545
++msgid "Seconds arrow color"
++msgstr "Couleur aiguille Sec"
++
++#: clock.c:546
++msgid "Length of sec arrow [%]"
++msgstr "Longueur aiguille Sec [%]"
++
++#: clock.c:547
++msgid "Width of sec arrow [%]"
++msgstr "Largeur des aiguilles Sec [%]"
++
++#: clock.c:552
++msgid "Time till tea"
++msgstr "Temps restant jusqu'au cafe"
++
++#: clock.c:553
++msgid "Show Countdown"
++msgstr "Afficher le compte a rebours"
+Index: clock-1.0.0/po/it_IT.po
+===================================================================
+--- clock-1.0.0/po/it_IT.po
++++ clock-1.0.0/po/it_IT.po	2008-04-22 18:43:53.000000000 +0300
+@@ -0,0 +1,140 @@
++# VDR clock plugin language source file.
++# Copyright (C) YEAR THE VDR-clock'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the VDR-clock package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR-clock\n"
++"Report-Msgid-Bugs-To: http://qa.mandriva.com/\n"
++"POT-Creation-Date: 2008-04-22 18:43+0300\n"
++"PO-Revision-Date: 2008-04-22 18:43+0300\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: clock.c:37
++msgid "Clock"
++msgstr "Orologio"
++
++#: clock.c:70
++msgid "Transparent"
++msgstr "Trasparente"
++
++#: clock.c:71
++msgid "White"
++msgstr "Bianco"
++
++#: clock.c:72
++msgid "Black"
++msgstr "Nero"
++
++#: clock.c:73
++msgid "Red"
++msgstr "Rosso"
++
++#: clock.c:74
++msgid "Green"
++msgstr "Verde"
++
++#: clock.c:75
++msgid "Yellow"
++msgstr "Giallo"
++
++#: clock.c:76
++msgid "Blue"
++msgstr "Blu"
++
++#: clock.c:78
++msgid "Digital"
++msgstr "Digitale"
++
++#: clock.c:79
++msgid "Analog"
++msgstr "Analogico"
++
++#: clock.c:83
++msgid "Internet time"
++msgstr "Ora Internet"
++
++#: clock.c:84
++msgid "Tea clock"
++msgstr "Pausa tш"
++
++#: clock.c:400
++msgid "It's tea time"
++msgstr "E' l'ora del tш!"
++
++#: clock.c:523
++msgid "x Position"
++msgstr "Posizione x"
++
++#: clock.c:524
++msgid "y Position"
++msgstr "Posizione y"
++
++#: clock.c:525
++msgid "Type of the clock"
++msgstr "Tipo di orologio"
++
++#: clock.c:527
++msgid "Background color"
++msgstr "Colore sfondo"
++
++#: clock.c:528
++msgid "Foreground color"
++msgstr "Colore primo piano"
++
++#: clock.c:532 clock.c:536
++msgid "Show Seconds"
++msgstr "Mostra secondi"
++
++#: clock.c:537
++msgid "FullScreen"
++msgstr "Schermo intero"
++
++#: clock.c:538
++msgid "Analog clock size"
++msgstr "Dimensione orologio analogico"
++
++#: clock.c:539
++msgid "Arrow color"
++msgstr "Colore freccia"
++
++#: clock.c:540
++msgid "Length of hour arrow [%]"
++msgstr "Lunghezza freccia ore [%]"
++
++#: clock.c:541
++msgid "Width of hour arrow [%]"
++msgstr "Larghezza freccia ore [%]"
++
++#: clock.c:542
++msgid "Length of min arrow [%]"
++msgstr "Lunghezza freccia minuti [%]"
++
++#: clock.c:543
++msgid "Width of min arrow [%]"
++msgstr "Larghezza freccia minuti [%]"
++
++#: clock.c:545
++msgid "Seconds arrow color"
++msgstr "Colore freccia secondi"
++
++#: clock.c:546
++msgid "Length of sec arrow [%]"
++msgstr "Lunghezza freccia secondi [%]"
++
++#: clock.c:547
++msgid "Width of sec arrow [%]"
++msgstr "Larghezza freccia secondi [%]"
++
++#: clock.c:552
++msgid "Time till tea"
++msgstr "Tempo restante per il tш"
++
++#: clock.c:553
++msgid "Show Countdown"
++msgstr "Mostra conto alla rovescia"
