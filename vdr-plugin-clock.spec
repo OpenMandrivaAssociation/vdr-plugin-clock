@@ -2,7 +2,7 @@
 %define plugin	clock
 %define name	vdr-plugin-%plugin
 %define version	1.0.0
-%define rel	4
+%define rel	5
 
 Summary:	VDR plugin: A Simple Clock
 Name:		%name
@@ -13,7 +13,6 @@ License:	GPL
 URL:		http://vdr.humpen.at/
 Source:		http://vdr.humpen.at/uploads/media/vdr-%plugin-%version.tgz
 Patch0:		clock-1.0.0-i18n-1.6.patch
-BuildRoot:	%{_tmppath}/%{name}-buildroot
 BuildRequires:	vdr-devel >= 1.6.0
 Requires:	vdr-abi = %vdr_abi
 
@@ -34,17 +33,7 @@ The Idea is to set a unused key from your remote control
 %vdr_plugin_build
 
 %install
-rm -rf %{buildroot}
 %vdr_plugin_install
-
-%clean
-rm -rf %{buildroot}
-
-%post
-%vdr_plugin_post %plugin
-
-%postun
-%vdr_plugin_postun %plugin
 
 %files -f %plugin.vdr
 %defattr(-,root,root)
