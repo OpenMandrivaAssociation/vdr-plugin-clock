@@ -4,7 +4,7 @@
 Summary:	VDR plugin: A Simple Clock
 Name:		vdr-plugin-%plugin
 Version:	1.0.0
-Release:	6
+Release:	7
 Group:		Video
 License:	GPL
 URL:		http://vdr.humpen.at/
