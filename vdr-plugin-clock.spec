@@ -7,7 +7,7 @@ Version:	1.0.0
 Release:	7
 Group:		Video
 License:	GPL
-URL:		http://vdr.humpen.at/
+URL:		https://vdr.humpen.at/
 Source:		http://vdr.humpen.at/uploads/media/vdr-%plugin-%{version}.tgz
 Patch0:		clock-1.0.0-i18n-1.6.patch
 BuildRequires:	vdr-devel >= 1.6.0
